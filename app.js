@@ -14,10 +14,8 @@ app.use(cors())
 
 let orders = []
 
-
-
 app.post('/api/checkout-session', async (req, res) => {
-    /* console.log(req.body) */
+
     try {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -43,7 +41,6 @@ app.post('/api/checkout-session', async (req, res) => {
         res.status(500).json({ error })
     }
 
-
 })
 
 app.post('/api/verify-checkout-session', async (req, res) => {
@@ -53,7 +50,6 @@ app.post('/api/verify-checkout-session', async (req, res) => {
 
         if (session) {
             res.json({ isVerified: session.payment_status == "paid" })
-            /* orders.push(session) */
 
             console.log(orders)
             FileSystem.appendFileSync('file.json', JSON.stringify(orders), (error) => {
@@ -64,7 +60,6 @@ app.post('/api/verify-checkout-session', async (req, res) => {
         } else {
             throw new Error('No Session')
         }
-
 
     } catch (error) {
         console.log(error)
