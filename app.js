@@ -2,7 +2,7 @@ const express = require('express')
 require('dotenv').config('.env')
 const app = express()
 const port = 5000
-const FileSystem = require('fs')
+const fs = require('fs')
 
 const cors = require('cors')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
@@ -45,18 +45,25 @@ app.post('/api/checkout-session', async (req, res) => {
 
 app.post('/api/verify-checkout-session', async (req, res) => {
 
+    let order
+    let jsonorder;
+    for (let i = 0; i < orders.length; i++) {
+        order = orders[i]
+        jsonorder = order.sessionId
+    }
+
     try {
         const session = await stripe.checkout.sessions.retrieve(req.body.sessionId)
 
         if (session) {
             res.json({ isVerified: session.payment_status == "paid" })
-
-            console.log(orders)
-            FileSystem.appendFileSync('file.json', JSON.stringify(orders), (error) => {
-                if (error) {
-                    throw error
-                }
-            })
+            if (session.id == jsonorder) {
+                fs.appendFile('file.json', JSON.stringify(orders, null, 2), (error) => {
+                    if (error) {
+                        throw error
+                    }
+                })
+            }
         } else {
             throw new Error('No Session')
         }
@@ -70,6 +77,7 @@ app.post('/api/verify-checkout-session', async (req, res) => {
 app.get('/api/order/:id', (req, res) => {
     const order = orders.find((order) => order.sessionId == req.params.id)
     res.json(order)
+    orders.splice(order, 1)
 })
 
 app.listen(port, () => console.log(`listening on port ${port}`))
